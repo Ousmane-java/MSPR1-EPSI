@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <title>Seahawks Nester - Dashboard</title>
     <!-- Bootstrap minimal -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="container mt-5">
     <h1 class="text-success">Seahawks Nester - Dashboard</h1>
-    <table class="table table-bordered">
+    
+    <table class="table table-bordered" id="harvesters-table">
         <thead>
             <tr>
                 <th>Hostname</th>
@@ -16,7 +17,9 @@
                 <th>Latence</th>
                 <th>Machines</th>
                 <th>Scan Results</th>
+                <th>État</th>
                 <th>Dernière MAJ</th>
+                <th>Détails</th>
             </tr>
         </thead>
         <tbody>
@@ -27,10 +30,83 @@
                 <td>{{ h.latency }}</td>
                 <td>{{ h.nb_machines }}</td>
                 <td><pre>{{ h.scan_results }}</pre></td>
+                <td>{{ h.status }}</td>
                 <td>{{ h.last_updated }}</td>
+                <td><a href="{{ url_for('views.harvester_detail', harvester_id=h.id) }}">Voir détails</a></td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+
+    <!-- Container pour les notifications Toast -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true" 
+         class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // previousCount = conversion en entier de la valeur transmise par Flask
+    let previousCount = parseInt('{{ harvesters_count }}', 10);
+
+    // Fonction pour afficher un toast
+    function showNotification(message) {
+        const toastContainer = document.getElementById('toast-container');
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast align-items-center text-white bg-primary border-0';
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                        data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>`;
+        
+        toastContainer.appendChild(toastEl);
+        let toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+
+        toastEl.addEventListener('hidden.bs.toast', () => {
+            toastEl.remove();
+        });
+    }
+
+    function updateDashboard() {
+        fetch("/harvesters_json")
+            .then(response => response.json())
+            .then(data => {
+                let tbody = document.querySelector("#harvesters-table tbody");
+                let html = "";
+                data.forEach(h => {
+                    let lastUpdated = new Date(h.last_updated).toLocaleString();
+                    html += `<tr>
+                        <td>${h.hostname}</td>
+                        <td>${h.ip}</td>
+                        <td>${h.latency}</td>
+                        <td>${h.nb_machines}</td>
+                        <td><pre>${h.scan_results}</pre></td>
+                        <td>${h.status}</td>
+                        <td>${lastUpdated}</td>
+                        <td><a href="/harvester/${h.id}">Voir détails</a></td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+
+                // Si le nombre d'enregistrements a augmenté, on affiche un toast
+                if (data.length > previousCount) {
+                    showNotification("Nouveau scan ajouté !");
+                }
+                previousCount = data.length;
+            })
+            .catch(error => console.error("Erreur de mise à jour:", error));
+    }
+
+    // Polling toutes les 5 secondes
+    setInterval(updateDashboard, 5000);
+    </script>
 </body>
 </html>

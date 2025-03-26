@@ -1,102 +1,269 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Seahawks Harvester</title>
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <meta charset="UTF-8">
+  <title>Seahawks Harvester</title>
+  <!-- Bootstrap CSS -->
+  <link 
+    rel="stylesheet" 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  >
+  <style>
+    /* ----- Couleurs Seahawks ----- */
+    :root {
+      --navy: #002244;
+      --green: #69BE28;
+      --light-gray: #f8f9fa; /* background clair */
+      --white: #ffffff;
+    }
+
+    /* ----- Bannière (hero) ----- */
+    .hero {
+      background: linear-gradient(to bottom right, var(--navy), var(--green));
+      color: var(--white);
+      padding: 60px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ----- Animation fade-in-up ----- */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    /* ----- Style des cartes ----- */
+    .card-header.navy {
+      background-color: var(--navy);
+      color: var(--white);
+    }
+    .card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* ----- Bouton Navy ----- */
+    .btn-navy {
+      background-color: var(--navy);
+      color: var(--white);
+      border: none;
+    }
+    .btn-navy:hover {
+      background-color: #001530; /* Navy un peu plus foncé */
+    }
+
+    /* ----- Spinner Navy ----- */
+    .spinner-border.text-navy {
+      color: var(--navy) !important;
+    }
+
+    /* ----- Statut en Navy ----- */
+    .status-text {
+      color: var(--navy);
+      font-weight: 600;
+      margin-left: 10px;
+    }
+  </style>
 </head>
-<body class="container mt-5">
-    <h1 class="text-primary">Seahawks Harvester</h1>
-    
-    <table class="table table-bordered w-50">
-        <tr><th>Nom</th><td>{{ data.hostname }}</td></tr>
-        <tr><th>IP</th><td>{{ data.ip }}</td></tr>
-        <tr><th>Latence</th><td>{{ data.latency }}</td></tr>
-        <tr><th>Machines détectées</th><td id="nb_machines">{{ data.nb_machines }}</td></tr>
-    </table>
+<body class="bg-light">
 
-    <!-- Boutons -->
-    <button id="scan-btn" class="btn btn-primary">Lancer un scan réseau</button>
-    <button id="send-btn" class="btn btn-success mt-2" style="display:none;">Envoyer les données</button>
-    
-    <!-- Zone d'info sur le scan -->
-    <span id="scan-status" class="ms-3 text-info"></span>
+<!-- Section hero (bannière) -->
+<div class="hero">
+  <h1 class="mb-3">Seahawks Harvester</h1>
+  <p>Application de scan réseau et d’envoi automatique des données vers le Nester.</p>
+</div>
 
-    <h2 class="mt-4">Résultats du scan :</h2>
-    <table class="table table-striped" id="scan-results"></table>
+<!-- Conteneur principal -->
+<div class="container my-5">
 
-    <script>
-    // Au clic, on lance le scan
-    document.getElementById("scan-btn").addEventListener("click", function() {
-        const statusEl = document.getElementById("scan-status");
-        statusEl.innerText = "Scan en cours…";
-        
-        fetch("/scan")
-            .then(response => {
-                if(!response.ok) {
-                    // Erreur HTTP (404, 500, etc.)
-                    statusEl.innerText = "Erreur lors du scan (code HTTP " + response.status + ")";
-                    throw new Error("HTTP status " + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // On vide le tableau
-                let scanResults = document.getElementById("scan-results");
-                scanResults.innerHTML = "<tr><th>Hôte</th><th>Nom</th><th>État</th></tr>";
+  <!-- Ligne de cartes (informations + actions) -->
+  <div class="row g-4 fade-in-up">
+    <!-- Carte d'infos machine -->
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header navy">
+          Informations de la machine
+        </div>
+        <div class="card-body">
+          <table class="table table-borderless mb-0">
+            <tbody>
+              <tr>
+                <th scope="row" style="width: 150px;">Nom</th>
+                <td>{{ data.hostname }}</td>
+              </tr>
+              <tr>
+                <th scope="row">IP</th>
+                <td>{{ data.ip }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Version</th>
+                <td>{{ data.version }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Latence</th>
+                <td>{{ data.latency }}</td>
+              </tr>
+              <tr>
+                <th scope="row">Machines détectées</th>
+                <td id="nb_machines">{{ data.nb_machines }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-                // On met à jour le nombre de machines
-                document.getElementById("nb_machines").innerText = data.length;
+    <!-- Carte d'actions -->
+    <div class="col-md-6">
+      <div class="card shadow h-100">
+        <div class="card-header navy">
+          Actions
+        </div>
+        <div class="card-body d-flex flex-column justify-content-center align-items-start">
+          <!-- Bouton scan (couleur Navy) -->
+          <button id="scan-btn" class="btn btn-navy mb-3">
+            Lancer un scan réseau
+          </button>
 
-                // Si on trouve 1 entrée "Aucune machine détectée"
-                if(data.length === 1 && data[0].host === "Aucune machine détectée") {
-                    statusEl.innerText = "Aucune machine détectée (pare-feu ou autre blocage).";
-                } else {
-                    statusEl.innerText = "Scan terminé. " + data.length + " machine(s) trouvée(s).";
-                }
+          <!-- Message de statut en Navy -->
+          <span id="scan-status" class="status-text"></span>
 
-                // On affiche le tableau
-                data.forEach(machine => {
-                    scanResults.innerHTML += `
-                        <tr>
-                            <td>${machine.host}</td>
-                            <td>${machine.hostname}</td>
-                            <td>${machine.state}</td>
-                        </tr>
-                    `;
+          <!-- Spinner Navy (caché par défaut) -->
+          <div id="spinner" class="spinner-border text-navy" role="status" style="display:none; margin-left:10px;">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résultats du scan -->
+  <div class="row mt-5 fade-in-up">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header navy">
+          Résultats du scan
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover" id="scan-results">
+              <!-- Le script va injecter <thead> et <tbody> -->
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- /container -->
+
+<!-- Bootstrap JS -->
+<script 
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script>
+document.getElementById("scan-btn").addEventListener("click", function() {
+    const statusEl = document.getElementById("scan-status");
+    const spinnerEl = document.getElementById("spinner");
+
+    // Afficher le spinner et mettre le message de statut
+    spinnerEl.style.display = "inline-block";
+    statusEl.textContent = "Scan en cours…";
+
+    fetch("/scan")
+        .then(response => {
+            if (!response.ok) {
+                statusEl.textContent = "Erreur lors du scan (code HTTP " + response.status + ")";
+                throw new Error("HTTP status " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Réinitialiser le tableau
+            let scanResults = document.getElementById("scan-results");
+            scanResults.innerHTML = `
+                <thead>
+                  <tr>
+                    <th>Hôte</th>
+                    <th>Nom</th>
+                    <th>État</th>
+                    <th>Ports</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            let tbody = scanResults.querySelector("tbody");
+
+            // Mettre à jour le nb de machines
+            document.getElementById("nb_machines").innerText = data.length;
+
+            // Gérer le message de statut
+            if (data.length === 1 && data[0].host === "Aucune machine détectée") {
+                statusEl.textContent = "Aucune machine détectée (pare-feu ou autre blocage).";
+            } else {
+                statusEl.textContent = "Scan terminé. " + data.length + " machine(s) trouvée(s).";
+            }
+
+            // On masque le spinner (scan terminé)
+            spinnerEl.style.display = "none";
+
+            // Afficher chaque machine
+            data.forEach(machine => {
+                const portsStr = (machine.ports && machine.ports.length > 0)
+                                 ? machine.ports.join(", ")
+                                 : "Aucun port ouvert";
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${machine.host}</td>
+                        <td>${machine.hostname}</td>
+                        <td>${machine.state}</td>
+                        <td>${portsStr}</td>
+                    </tr>
+                `;
+            });
+
+            // Envoi automatique des données
+            statusEl.textContent += " Envoi des données en cours…";
+            spinnerEl.style.display = "inline-block"; // Réafficher le spinner pendant l'envoi
+
+            fetch("/send", { method: "POST" })
+                .then(response => response.json())
+                .then(sendData => {
+                    spinnerEl.style.display = "none";
+                    if (sendData.status === "success") {
+                        statusEl.textContent = "Données envoyées avec succès !";
+                    } else {
+                        statusEl.textContent = "Erreur lors de l'envoi : " + sendData.message;
+                    }
+                })
+                .catch(error => {
+                    spinnerEl.style.display = "none";
+                    console.error("Erreur lors de l'envoi :", error);
+                    statusEl.textContent = "Erreur lors de l'envoi : " + error;
                 });
-
-                // Une fois le scan fini, on affiche le bouton "Envoyer les données"
-                document.getElementById("send-btn").style.display = "inline-block";
-            })
-            .catch(error => {
-                console.error("Erreur lors du scan :", error);
-                statusEl.innerText = "Erreur lors du scan : " + error;
-            });
-    });
-
-    // Au clic, on envoie les données au serveur
-    document.getElementById("send-btn").addEventListener("click", function() {
-        const statusEl = document.getElementById("scan-status");
-        statusEl.innerText = "Envoi en cours…";
-
-        fetch("/send", { method: "POST" })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    statusEl.innerText = "Données envoyées avec succès !";
-                    alert("Données envoyées avec succès !");
-                } else {
-                    statusEl.innerText = "Erreur lors de l'envoi : " + data.message;
-                    alert("Erreur lors de l'envoi : " + data.message);
-                }
-            })
-            .catch(error => {
-                console.error("Erreur lors de l'envoi :", error);
-                statusEl.innerText = "Erreur lors de l'envoi : " + error;
-            });
-    });
-    </script>
+        })
+        .catch(error => {
+            spinnerEl.style.display = "none";
+            console.error("Erreur lors du scan :", error);
+            statusEl.textContent = "Erreur lors du scan : " + error;
+        });
+});
+</script>
 </body>
 </html>

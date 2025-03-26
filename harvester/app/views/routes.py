@@ -17,13 +17,13 @@ def dashboard():
         "latency": latency,
         "nb_machines": 0,
         "scan": [],
-        "version": Config.VERSION
+        "version": Config.VERSION  # On inclut la version
     }
     return render_template("dashboard.html", data=data)
 
 @views_bp.route("/scan", methods=["GET"])
 def scan_network_route():
-    # Lance le scan, renvoie JSON
+    # Lance le scan, renvoie JSON (machines + ports)
     scan_results = scan_network()
     return jsonify(scan_results)
 

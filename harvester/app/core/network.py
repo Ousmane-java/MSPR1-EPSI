@@ -17,26 +17,41 @@ def guess_subnet():
 
 def scan_network():
     """
-    Scanne automatiquement le sous-réseau déterminé par guess_subnet().
-    Utilise un 'ping scan' (-sn) pour détecter les hôtes allumés.
+    Scanne le réseau ET récupère les ports ouverts sur une plage donnée.
+    Utilise un SYN scan (-sS) sur les 1000 ports les plus communs par exemple.
     """
     target_network = guess_subnet()
     scanner = nmap.PortScanner()
-    scanner.scan(hosts=target_network, arguments='-sn')
+    
+    # -sS = SYN scan, -p 1-1000 = ports 1 à 1000, -T4 = plus agressif/rapide
+    scanner.scan(hosts=target_network, arguments='-sS -p 1-1000 -T4')
     results = []
 
     for host in scanner.all_hosts():
+        host_state = scanner[host].state() if host in scanner.all_hosts() else "unknown"
+        host_name = scanner[host].hostname() or "N/A"
+
+        # Récupération des ports ouverts
+        open_ports = []
+        for proto in scanner[host].all_protocols():
+            port_list = scanner[host][proto].keys()
+            for port in port_list:
+                port_state = scanner[host][proto][port]['state']
+                if port_state == 'open':
+                    open_ports.append(port)
+
         results.append({
             "host": host,
-            "hostname": scanner[host].hostname() or "N/A",
-            "state": scanner[host].state() or "unknown"
+            "hostname": host_name,
+            "state": host_state,
+            "ports": open_ports
         })
 
     if not results:
-        # Aucun hôte trouvé (peut-être bloqué par firewall)
         return [{
             "host": "Aucune machine détectée",
             "hostname": "",
-            "state": "N/A"
+            "state": "N/A",
+            "ports": []
         }]
     return results
