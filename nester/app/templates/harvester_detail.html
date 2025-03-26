@@ -4,39 +4,88 @@
     <meta charset="UTF-8">
     <title>Détails de la sonde</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+      :root {
+        --navy: #002244;
+        --green: #69BE28;
+        --white: #FFFFFF;
+      }
+      .hero {
+        background: linear-gradient(to bottom right, var(--navy), var(--green));
+        color: var(--white);
+        padding: 40px 20px;
+        text-align: center;
+      }
+      .hero h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .card-header {
+        background-color: var(--navy);
+        color: var(--white);
+      }
+      .card:hover {
+        transform: scale(1.01);
+        box-shadow: 0 0 15px rgba(0,0,0,0.15);
+        transition: all 0.2s ease-in-out;
+      }
+      /* Force le texte dans <pre> à revenir à la ligne */
+      pre {
+        white-space: pre-wrap; 
+        word-wrap: break-word; 
+        max-width: 100%;
+      }
+    </style>
 </head>
-<body class="container mt-5">
-    <h1 class="text-success">Détails de la sonde: {{ harvester.hostname }}</h1>
-    <table class="table table-bordered">
-        <tr>
-            <th>Hostname</th>
-            <td>{{ harvester.hostname }}</td>
-        </tr>
-        <tr>
-            <th>IP</th>
-            <td>{{ harvester.ip }}</td>
-        </tr>
-        <tr>
-            <th>Latence</th>
-            <td>{{ harvester.latency }}</td>
-        </tr>
-        <tr>
-            <th>Machines détectées</th>
-            <td>{{ harvester.nb_machines }}</td>
-        </tr>
-        <tr>
-            <th>Scan Results</th>
-            <td><pre>{{ harvester.scan_results }}</pre></td>
-        </tr>
-        <tr>
-            <th>Dernière MAJ</th>
-            <td>{{ harvester.last_updated }}</td>
-        </tr>
-        <tr>
-            <th>État</th>
-            <td>{{ harvester.status }}</td>
-        </tr>
-    </table>
-    <a href="{{ url_for('views.index') }}" class="btn btn-primary">Retour au dashboard</a>
+<body class="bg-light">
+
+<!-- Bannière hero -->
+<div class="hero">
+  <h1>Détails de la sonde: {{ harvester.hostname }}</h1>
+</div>
+
+<div class="container mt-5">
+    <div class="card shadow">
+      <div class="card-header">
+        Informations de la sonde
+      </div>
+      <div class="card-body">
+        <table class="table table-bordered">
+            <tr>
+                <th>Hostname</th>
+                <td>{{ harvester.hostname }}</td>
+            </tr>
+            <tr>
+                <th>IP</th>
+                <td>{{ harvester.ip }}</td>
+            </tr>
+            <tr>
+                <th>Latence</th>
+                <td>{{ harvester.latency }}</td>
+            </tr>
+            <tr>
+                <th>Machines détectées</th>
+                <td>{{ harvester.nb_machines }}</td>
+            </tr>
+            <tr>
+                <th>Scan Results</th>
+                <!-- Avec le CSS ci-dessus, ça se wrap ou se scroll -->
+                <td><pre>{{ harvester.scan_results }}</pre></td>
+            </tr>
+            <tr>
+                <th>Dernière MAJ</th>
+                <td>{{ harvester.last_updated }}</td>
+            </tr>
+            <tr>
+                <th>État</th>
+                <td>{{ harvester.status }}</td>
+            </tr>
+        </table>
+        <a href="{{ url_for('views.index') }}" class="btn btn-primary mt-3">Retour au dashboard</a>
+      </div>
+    </div>
+</div>
+
 </body>
 </html>

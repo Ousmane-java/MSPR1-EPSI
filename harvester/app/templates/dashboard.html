@@ -4,20 +4,16 @@
   <meta charset="UTF-8">
   <title>Seahawks Harvester</title>
   <!-- Bootstrap CSS -->
-  <link 
-    rel="stylesheet" 
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  >
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
-    /* ----- Couleurs Seahawks ----- */
+    /* ----- Palette de couleurs Seahawks ----- */
     :root {
       --navy: #002244;
       --green: #69BE28;
-      --light-gray: #f8f9fa; /* background clair */
-      --white: #ffffff;
+      --white: #FFFFFF;
     }
 
-    /* ----- Bannière (hero) ----- */
+    /* ----- Section hero (bannière) ----- */
     .hero {
       background: linear-gradient(to bottom right, var(--navy), var(--green));
       color: var(--white);
@@ -46,42 +42,46 @@
     }
 
     /* ----- Style des cartes ----- */
-    .card-header.navy {
+    .card-header {
       background-color: var(--navy);
       color: var(--white);
     }
     .card:hover {
       transform: scale(1.02);
-      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
       transition: all 0.2s ease-in-out;
     }
 
-    /* ----- Bouton Navy ----- */
+    /* ----- Bouton personnalisé Navy ----- */
     .btn-navy {
       background-color: var(--navy);
       color: var(--white);
       border: none;
     }
     .btn-navy:hover {
-      background-color: #001530; /* Navy un peu plus foncé */
+      background-color: #001530;
     }
 
-    /* ----- Spinner Navy ----- */
+    /* ----- Spinner et statut ----- */
     .spinner-border.text-navy {
       color: var(--navy) !important;
     }
-
-    /* ----- Statut en Navy ----- */
     .status-text {
       color: var(--navy);
       font-weight: 600;
       margin-left: 10px;
     }
+
+    /* ----- Header du modal en vert ----- */
+    .bg-green {
+      background-color: var(--green) !important;
+      color: var(--white);
+    }
   </style>
 </head>
 <body class="bg-light">
 
-<!-- Section hero (bannière) -->
+<!-- Section hero -->
 <div class="hero">
   <h1 class="mb-3">Seahawks Harvester</h1>
   <p>Application de scan réseau et d’envoi automatique des données vers le Nester.</p>
@@ -89,13 +89,12 @@
 
 <!-- Conteneur principal -->
 <div class="container my-5">
-
   <!-- Ligne de cartes (informations + actions) -->
   <div class="row g-4 fade-in-up">
-    <!-- Carte d'infos machine -->
+    <!-- Carte d'informations de la machine -->
     <div class="col-md-6">
       <div class="card shadow">
-        <div class="card-header navy">
+        <div class="card-header">
           Informations de la machine
         </div>
         <div class="card-body">
@@ -130,19 +129,21 @@
     <!-- Carte d'actions -->
     <div class="col-md-6">
       <div class="card shadow h-100">
-        <div class="card-header navy">
+        <div class="card-header">
           Actions
         </div>
         <div class="card-body d-flex flex-column justify-content-center align-items-start">
-          <!-- Bouton scan (couleur Navy) -->
+          <!-- Bouton pour lancer un scan -->
           <button id="scan-btn" class="btn btn-navy mb-3">
             Lancer un scan réseau
           </button>
-
-          <!-- Message de statut en Navy -->
+          <!-- Bouton pour accéder au rapport complet (même style navy) -->
+          <button id="view-full-report" class="btn btn-navy mb-3">
+            Accéder au rapport complet
+          </button>
+          <!-- Zone de statut -->
           <span id="scan-status" class="status-text"></span>
-
-          <!-- Spinner Navy (caché par défaut) -->
+          <!-- Spinner -->
           <div id="spinner" class="spinner-border text-navy" role="status" style="display:none; margin-left:10px;">
             <span class="visually-hidden">Chargement...</span>
           </div>
@@ -151,119 +152,174 @@
     </div>
   </div>
 
-  <!-- Résultats du scan -->
+  <!-- Résultats du scan affichés dans une carte -->
   <div class="row mt-5 fade-in-up">
     <div class="col-12">
       <div class="card shadow">
-        <div class="card-header navy">
+        <div class="card-header">
           Résultats du scan
         </div>
         <div class="card-body">
           <div class="table-responsive">
             <table class="table table-striped table-hover" id="scan-results">
-              <!-- Le script va injecter <thead> et <tbody> -->
+              <!-- Le contenu sera injecté via JavaScript -->
             </table>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 </div> <!-- /container -->
 
+<!-- Modal pour afficher le rapport complet -->
+<div class="modal fade" id="fullReportModal" tabindex="-1" aria-labelledby="fullReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <!-- Header du modal en vert -->
+      <div class="modal-header bg-green">
+        <h5 class="modal-title" id="fullReportModalLabel">Rapport complet du scan</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped" id="full-report-results">
+            <!-- Le contenu complet du rapport sera inséré ici -->
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Bootstrap JS -->
-<script 
-  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+// Fonction pour lancer le scan et envoyer automatiquement les données
 document.getElementById("scan-btn").addEventListener("click", function() {
     const statusEl = document.getElementById("scan-status");
     const spinnerEl = document.getElementById("spinner");
 
-    // Afficher le spinner et mettre le message de statut
     spinnerEl.style.display = "inline-block";
     statusEl.textContent = "Scan en cours…";
 
     fetch("/scan")
-        .then(response => {
-            if (!response.ok) {
-                statusEl.textContent = "Erreur lors du scan (code HTTP " + response.status + ")";
-                throw new Error("HTTP status " + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Réinitialiser le tableau
-            let scanResults = document.getElementById("scan-results");
-            scanResults.innerHTML = `
-                <thead>
+      .then(response => {
+          if (!response.ok) {
+              statusEl.textContent = "Erreur lors du scan (code HTTP " + response.status + ")";
+              throw new Error("HTTP status " + response.status);
+          }
+          return response.json();
+      })
+      .then(data => {
+          // Afficher les résultats dans le tableau principal
+          let scanResults = document.getElementById("scan-results");
+          scanResults.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Hôte</th>
+                  <th>Nom</th>
+                  <th>État</th>
+                  <th>Ports</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+          `;
+          let tbody = scanResults.querySelector("tbody");
+
+          // Mettre à jour le nombre de machines détectées
+          document.getElementById("nb_machines").innerText = data.length;
+
+          if (data.length === 1 && data[0].host === "Aucune machine détectée") {
+              statusEl.textContent = "Aucune machine détectée (pare-feu ou autre blocage).";
+          } else {
+              statusEl.textContent = "Scan terminé. " + data.length + " machine(s) trouvée(s).";
+          }
+          spinnerEl.style.display = "none";
+
+          data.forEach(machine => {
+              const portsStr = (machine.ports && machine.ports.length > 0)
+                               ? machine.ports.join(", ")
+                               : "Aucun port ouvert";
+              tbody.innerHTML += `
                   <tr>
-                    <th>Hôte</th>
-                    <th>Nom</th>
-                    <th>État</th>
-                    <th>Ports</th>
+                      <td>${machine.host}</td>
+                      <td>${machine.hostname}</td>
+                      <td>${machine.state}</td>
+                      <td>${portsStr}</td>
                   </tr>
-                </thead>
-                <tbody></tbody>
-            `;
-            let tbody = scanResults.querySelector("tbody");
+              `;
+          });
 
-            // Mettre à jour le nb de machines
-            document.getElementById("nb_machines").innerText = data.length;
+          // Sauvegarder le dernier scan dans le localStorage
+          localStorage.setItem("lastScan", JSON.stringify(data));
 
-            // Gérer le message de statut
-            if (data.length === 1 && data[0].host === "Aucune machine détectée") {
-                statusEl.textContent = "Aucune machine détectée (pare-feu ou autre blocage).";
-            } else {
-                statusEl.textContent = "Scan terminé. " + data.length + " machine(s) trouvée(s).";
-            }
+          // Envoi automatique des données
+          statusEl.textContent += " Envoi des données en cours…";
+          spinnerEl.style.display = "inline-block";
+          fetch("/send", { method: "POST" })
+              .then(response => response.json())
+              .then(sendData => {
+                  spinnerEl.style.display = "none";
+                  if (sendData.status === "success") {
+                      statusEl.textContent = "Données envoyées avec succès !";
+                  } else {
+                      statusEl.textContent = "Erreur lors de l'envoi : " + sendData.message;
+                  }
+              })
+              .catch(error => {
+                  spinnerEl.style.display = "none";
+                  console.error("Erreur lors de l'envoi :", error);
+                  statusEl.textContent = "Erreur lors de l'envoi : " + error;
+              });
+      })
+      .catch(error => {
+          spinnerEl.style.display = "none";
+          console.error("Erreur lors du scan :", error);
+          statusEl.textContent = "Erreur lors du scan : " + error;
+      });
+});
 
-            // On masque le spinner (scan terminé)
-            spinnerEl.style.display = "none";
-
-            // Afficher chaque machine
-            data.forEach(machine => {
-                const portsStr = (machine.ports && machine.ports.length > 0)
-                                 ? machine.ports.join(", ")
-                                 : "Aucun port ouvert";
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${machine.host}</td>
-                        <td>${machine.hostname}</td>
-                        <td>${machine.state}</td>
-                        <td>${portsStr}</td>
-                    </tr>
-                `;
-            });
-
-            // Envoi automatique des données
-            statusEl.textContent += " Envoi des données en cours…";
-            spinnerEl.style.display = "inline-block"; // Réafficher le spinner pendant l'envoi
-
-            fetch("/send", { method: "POST" })
-                .then(response => response.json())
-                .then(sendData => {
-                    spinnerEl.style.display = "none";
-                    if (sendData.status === "success") {
-                        statusEl.textContent = "Données envoyées avec succès !";
-                    } else {
-                        statusEl.textContent = "Erreur lors de l'envoi : " + sendData.message;
-                    }
-                })
-                .catch(error => {
-                    spinnerEl.style.display = "none";
-                    console.error("Erreur lors de l'envoi :", error);
-                    statusEl.textContent = "Erreur lors de l'envoi : " + error;
-                });
-        })
-        .catch(error => {
-            spinnerEl.style.display = "none";
-            console.error("Erreur lors du scan :", error);
-            statusEl.textContent = "Erreur lors du scan : " + error;
-        });
+// Fonction pour afficher le rapport complet dans le modal
+document.getElementById("view-full-report").addEventListener("click", function() {
+    const lastScanStr = localStorage.getItem("lastScan");
+    if (!lastScanStr) {
+        alert("Aucun scan disponible.");
+        return;
+    }
+    const data = JSON.parse(lastScanStr);
+    let reportTable = document.getElementById("full-report-results");
+    reportTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Hôte</th>
+            <th>Nom</th>
+            <th>État</th>
+            <th>Ports</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+    let tbody = reportTable.querySelector("tbody");
+    data.forEach(machine => {
+        const portsStr = (machine.ports && machine.ports.length > 0)
+                         ? machine.ports.join(", ")
+                         : "Aucun port ouvert";
+        tbody.innerHTML += `
+            <tr>
+                <td>${machine.host}</td>
+                <td>${machine.hostname}</td>
+                <td>${machine.state}</td>
+                <td>${portsStr}</td>
+            </tr>
+        `;
+    });
+    // Afficher le modal
+    var modalEl = document.getElementById("fullReportModal");
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
 });
 </script>
+
 </body>
 </html>
