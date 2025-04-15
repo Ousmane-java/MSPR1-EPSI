@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from config import Config
+from config import Config # type: ignore
 
 db = SQLAlchemy()
 
@@ -12,7 +12,7 @@ def create_app():
     db.init_app(app)
 
     # Importer et enregistrer les Blueprints
-    from app.api.routes import api_bp
+    from app.api.routes import api_bp # type: ignore
     from app.views.routes import views_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(views_bp)

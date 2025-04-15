@@ -1,27 +1,40 @@
 import socket
 import subprocess
 import re
+import platform
 
 def get_ip_hostname():
     hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
+    try:
+        ip = socket.gethostbyname(hostname)
+    except:
+        ip = "Inconnu"
     return ip, hostname
 
 def get_latency(target="8.8.8.8"):
     """
-    Sous Windows, on utilise 'ping -n 4'.
-    On parse la ligne 'Minimum = Xms, Maximum = Yms, Moyenne = Zms'.
+    Mesure de la latence avec compatibilité multiplateforme (Windows, macOS, Linux).
     """
+    system = platform.system()
+    
+    if system == "Windows":
+        cmd = ["ping", "-n", "4", target]
+        regex = r"Moyenne = (\d+)"
+    else:
+        cmd = ["ping", "-c", "4", target]
+        regex = r"time=(\d+\.\d+)"
+
     try:
-        output = subprocess.run(["ping", "-n", "4", target],
-                                capture_output=True, text=True)
+        output = subprocess.run(cmd, capture_output=True, text=True)
         if output.returncode != 0:
             return "Ping échoué"
 
-        match = re.search(r"Minimum = (\d+)ms, Maximum = (\d+)ms, Moyenne = (\d+)ms", output.stdout)
+        match = re.findall(regex, output.stdout)
         if match:
-            _, _, avg_ms = match.groups()
-            return f"{avg_ms} ms (moyenne)"
+            # Convertir toutes les valeurs en float et calculer la moyenne
+            values = [float(val) for val in match]
+            avg = sum(values) / len(values)
+            return f"{round(avg, 2)} ms (moyenne)"
         else:
             return "Impossible de déterminer la latence."
     except Exception as e:
