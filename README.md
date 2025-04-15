@@ -180,7 +180,7 @@ Structure JSON envoyée :
 
 **Ousmane Drame**  
 🎓 Étudiant en Bachelor Systèmes & Réseaux à l’EPSI Lyon  
-📬 ousmane.drame@epsi.fr  
+📬 ousmanedrame.edu@gmail.com  
 🔗 [LinkedIn](https://www.linkedin.com/in/ousmane-drame-83858a334/)
 
 ---
